@@ -2,6 +2,8 @@ package dto
 
 import "github.com/skndash96/lastnight-backend/internal/db"
 
+// TODO: Refactor DTO so that it does NOT contain any database-specific types
+
 // ------ path params ------
 type TeamPathParams struct {
 	TeamID int32 `param:"teamID" validate:"required"`
