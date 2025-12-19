@@ -98,7 +98,7 @@ func (h *tagHandler) UpdateTagKey(c echo.Context) error {
 		return err
 	}
 
-	tag, err := h.tagSrv.UpdateTag(c.Request().Context(), v.TagID, v.Name)
+	tag, err := h.tagSrv.UpdateTagKey(c.Request().Context(), v.TagID, v.Name)
 	if err != nil {
 		return err
 	}

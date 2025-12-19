@@ -23,7 +23,7 @@ func (s *TagService) ListTags(ctx context.Context, membershipID int32) ([]db.Tag
 	tagRepo := repository.NewTagRepo(s.db)
 	tags, err := tagRepo.ListTags(ctx, membershipID)
 	if err != nil {
-		return nil, err
+		return nil, NewSrvError(err, SrvErrInternal, "Failed to list tags")
 	}
 	return tags, nil
 }
@@ -35,7 +35,28 @@ func (s *TagService) CreateTagKey(ctx context.Context, teamID int32, name string
 		if helpers.IsUniqueViolation(err) {
 			return nil, NewSrvError(err, SrvErrInvalidInput, "tag value already exists")
 		}
-		return nil, err
+		return nil, NewSrvError(err, SrvErrInternal, "failed to create tag key")
+	}
+	return &tag, nil
+}
+
+func (s *TagService) UpdateTagKey(ctx context.Context, tagID int32, name string) (*db.TagKey, error) {
+	tagRepo := repository.NewTagRepo(s.db)
+	tag, err := tagRepo.UpdateTagKey(ctx, tagID, name)
+	if err != nil {
+		if helpers.IsUniqueViolation(err) {
+			return nil, NewSrvError(err, SrvErrInvalidInput, "tag value already exists")
+		}
+		return nil, NewSrvError(err, SrvErrInternal, "failed to update tag key")
+	}
+	return &tag, nil
+}
+
+func (s *TagService) DeleteTagKey(ctx context.Context, tagID int32) (*db.TagKey, error) {
+	tagRepo := repository.NewTagRepo(s.db)
+	tag, err := tagRepo.DeleteTagKey(ctx, tagID)
+	if err != nil {
+		return nil, NewSrvError(err, SrvErrInternal, "failed to delete tag key")
 	}
 	return &tag, nil
 }
@@ -47,37 +68,16 @@ func (s *TagService) CreateTagValue(ctx context.Context, tagID int32, value stri
 		if helpers.IsUniqueViolation(err) {
 			return nil, NewSrvError(err, SrvErrInvalidInput, "tag value already exists")
 		}
-		return nil, err
+		return nil, NewSrvError(err, SrvErrInternal, "failed to create tag value")
 	}
 	return &tagValue, nil
-}
-
-func (s *TagService) UpdateTag(ctx context.Context, tagID int32, name string) (*db.TagKey, error) {
-	tagRepo := repository.NewTagRepo(s.db)
-	tag, err := tagRepo.UpdateTagKey(ctx, tagID, name)
-	if err != nil {
-		if helpers.IsUniqueViolation(err) {
-			return nil, NewSrvError(err, SrvErrInvalidInput, "tag value already exists")
-		}
-		return nil, err
-	}
-	return &tag, nil
-}
-
-func (s *TagService) DeleteTagKey(ctx context.Context, tagID int32) (*db.TagKey, error) {
-	tagRepo := repository.NewTagRepo(s.db)
-	tag, err := tagRepo.DeleteTagKey(ctx, tagID)
-	if err != nil {
-		return nil, err
-	}
-	return &tag, nil
 }
 
 func (s *TagService) DeleteTagValue(ctx context.Context, tagValueID int32) (*db.TagValue, error) {
 	tagValueRepo := repository.NewTagRepo(s.db)
 	tagValue, err := tagValueRepo.DeleteTagValue(ctx, tagValueID)
 	if err != nil {
-		return nil, err
+		return nil, NewSrvError(err, SrvErrInternal, "failed to delete tag value")
 	}
 	return &tagValue, nil
 }

@@ -30,7 +30,7 @@ func ErrorHandler(err error, c echo.Context) {
 		msg = CustomValidationErrMsg(&vErr)
 		code = http.StatusBadRequest
 	} else if srvErr, ok := err.(*service.SrvError); ok {
-		err = srvErr.Internal
+		err = srvErr.Unwrap()
 		code = mapSrvErrorToApiError(srvErr)
 		msg = srvErr.Message
 	} else if httpErr, ok := err.(*echo.HTTPError); ok {

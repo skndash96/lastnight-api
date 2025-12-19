@@ -1,7 +1,7 @@
 package service
 
 type SrvError struct {
-	Internal error
+	internal error
 	Kind     SrvErrKind
 	Message  string
 }
@@ -12,9 +12,13 @@ func (e *SrvError) Error() string {
 	return e.Message
 }
 
+func (e *SrvError) Unwrap() error {
+	return e.internal
+}
+
 func NewSrvError(err error, kind SrvErrKind, message string) *SrvError {
 	return &SrvError{
-		Internal: err,
+		internal: err,
 		Kind:     kind,
 		Message:  message,
 	}

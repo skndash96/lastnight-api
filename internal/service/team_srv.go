@@ -67,12 +67,12 @@ func (s *TeamService) JoinDefaultTeam(ctx context.Context, userID int32, userEma
 		if helpers.IsNoRows(err) {
 			return nil, NewSrvError(nil, SrvErrNotFound, "team not found")
 		}
-		return nil, NewSrvError(err, SrvErrInternal, "failed to query team")
+		return nil, NewSrvError(err, SrvErrInternal, "failed to find team")
 	}
 
 	_, err = s.joinTeam(ctx, userID, team.ID)
 	if err != nil {
-		return nil, err
+		return nil, NewSrvError(err, SrvErrInternal, "failed to join team")
 	}
 
 	return &team, nil
