@@ -139,13 +139,6 @@ definitions:
         example: Something went wrong
         type: string
     type: object
-  dto.GetTagsResponse:
-    properties:
-      data:
-        items:
-          $ref: '#/definitions/db.Tag'
-        type: array
-    type: object
   dto.GetTeamsResponse:
     properties:
       data:
@@ -163,6 +156,13 @@ definitions:
     properties:
       data:
         $ref: '#/definitions/db.Team'
+    type: object
+  dto.ListFiltersResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/db.Tag'
+        type: array
     type: object
   dto.LoginRequest:
     properties:
@@ -316,9 +316,9 @@ paths:
       summary: Get Teams
       tags:
       - Team
-  /api/teams/{teamID}/tags:
+  /api/teams/{teamID}/filters:
     get:
-      description: Get the tags of a team
+      description: Get the filter tags of a team
       parameters:
       - description: Team ID
         in: path
@@ -331,14 +331,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/dto.GetTagsResponse'
+            $ref: '#/definitions/dto.ListFiltersResponse'
         default:
           description: ""
           schema:
             $ref: '#/definitions/dto.ErrorResponse'
-      summary: Get Tag
+      summary: List Filters
       tags:
       - Tag
+  /api/teams/{teamID}/tags:
     post:
       description: Create a new tag key
       parameters:

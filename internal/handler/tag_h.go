@@ -19,17 +19,16 @@ func NewTagHandler(s *service.TagService) *tagHandler {
 	}
 }
 
-// GetTags retrieves the tag of a team.
-// @Summary Get Tag
+// @Summary List Filters
 // @Tags Tag
-// @Description Get the tags of a team
+// @Description Get the filter tags of a team
 // @Param teamID path string true "Team ID"
 // @Produce json
-// @Success 200 {object} dto.GetTagsResponse
+// @Success 200 {object} dto.ListFiltersResponse
 // @Failure default {object} dto.ErrorResponse
-// @Router /api/teams/{teamID}/tags [get]
-func (h *tagHandler) ListTags(c echo.Context) error {
-	v := new(dto.GetTagsRequest)
+// @Router /api/teams/{teamID}/filters [get]
+func (h *tagHandler) ListFilters(c echo.Context) error {
+	v := new(dto.ListFiltersRequest)
 	if err := c.Bind(v); err != nil {
 		return err
 	}
@@ -39,12 +38,12 @@ func (h *tagHandler) ListTags(c echo.Context) error {
 		return echo.ErrUnauthorized
 	}
 
-	tags, err := h.tagSrv.ListTags(c.Request().Context(), session.MembershipID)
+	tags, err := h.tagSrv.ListFilters(c.Request().Context(), session.MembershipID)
 	if err != nil {
 		return err
 	}
 
-	return c.JSON(http.StatusOK, dto.GetTagsResponse{
+	return c.JSON(http.StatusOK, dto.ListFiltersResponse{
 		Data: tags,
 	})
 }
@@ -178,7 +177,7 @@ func (h *tagHandler) CreateTagValue(c echo.Context) error {
 // @Produce json
 // @Success 200 {object} dto.DeleteTagValueResponse
 // @Failure default {object} dto.ErrorResponse
-// @Router /api/teams/{teamID}/tags/{tagID}/values/{valueID} [delete]
+// @Router /api/teams/{teamID}/tags/{tagID}/values/{tagValueID} [delete]
 func (h *tagHandler) DeleteTagValue(c echo.Context) error {
 	v := new(dto.DeleteTagValueRequest)
 

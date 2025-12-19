@@ -19,9 +19,9 @@ func NewTagService(p *pgxpool.Pool) *TagService {
 	}
 }
 
-func (s *TagService) ListTags(ctx context.Context, membershipID int32) ([]db.Tag, error) {
+func (s *TagService) ListFilters(ctx context.Context, membershipID int32) ([]db.Tag, error) {
 	tagRepo := repository.NewTagRepo(s.db)
-	tags, err := tagRepo.ListTags(ctx, membershipID)
+	tags, err := tagRepo.ListFilters(ctx, membershipID)
 	if err != nil {
 		return nil, NewSrvError(err, SrvErrInternal, "Failed to list tags")
 	}

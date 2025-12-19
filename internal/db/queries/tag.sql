@@ -1,4 +1,4 @@
--- name: ListTags :many
+-- name: ListFilters :many
 SELECT
   k.id AS key_id,
   k.name AS key,
@@ -12,8 +12,8 @@ SELECT
     ORDER BY v.value
   ) FILTER (WHERE v.id IS NOT NULL) AS options
   FROM tag_keys k
-  LEFT JOIN team_member_tags tmt ON tmt.key_id = k.id AND tmt.membership_id = $1
-  LEFT JOIN tag_values sv ON sv.id = tmt.value_id
+  LEFT JOIN member_filters f ON f.key_id = k.id AND f.membership_id = $1
+  LEFT JOIN tag_values sv ON sv.id = f.value_id
   LEFT JOIN tag_values v ON v.key_id = k.id
   GROUP BY k.id, k.name, sv.id, sv.value;
 

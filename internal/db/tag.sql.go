@@ -88,7 +88,7 @@ func (q *Queries) DeleteTagValue(ctx context.Context, id int32) (TagValue, error
 	return i, err
 }
 
-const listTags = `-- name: ListTags :many
+const listFilters = `-- name: ListFilters :many
 SELECT
   k.id AS key_id,
   k.name AS key,
@@ -102,13 +102,13 @@ SELECT
     ORDER BY v.value
   ) FILTER (WHERE v.id IS NOT NULL) AS options
   FROM tag_keys k
-  LEFT JOIN team_member_tags tmt ON tmt.key_id = k.id AND tmt.membership_id = $1
-  LEFT JOIN tag_values sv ON sv.id = tmt.value_id
+  LEFT JOIN member_filters f ON f.key_id = k.id AND f.membership_id = $1
+  LEFT JOIN tag_values sv ON sv.id = f.value_id
   LEFT JOIN tag_values v ON v.key_id = k.id
   GROUP BY k.id, k.name, sv.id, sv.value
 `
 
-type ListTagsRow struct {
+type ListFiltersRow struct {
 	KeyID   int32       `json:"key_id"`
 	Key     string      `json:"key"`
 	ValueID pgtype.Int4 `json:"value_id"`
@@ -116,15 +116,15 @@ type ListTagsRow struct {
 	Options []byte      `json:"options"`
 }
 
-func (q *Queries) ListTags(ctx context.Context, membershipID int32) ([]ListTagsRow, error) {
-	rows, err := q.db.Query(ctx, listTags, membershipID)
+func (q *Queries) ListFilters(ctx context.Context, membershipID int32) ([]ListFiltersRow, error) {
+	rows, err := q.db.Query(ctx, listFilters, membershipID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []ListTagsRow
+	var items []ListFiltersRow
 	for rows.Next() {
-		var i ListTagsRow
+		var i ListFiltersRow
 		if err := rows.Scan(
 			&i.KeyID,
 			&i.Key,

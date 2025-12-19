@@ -195,16 +195,16 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/teams/{teamID}/tags": {
+        "/api/teams/{teamID}/filters": {
             "get": {
-                "description": "Get the tags of a team",
+                "description": "Get the filter tags of a team",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "Tag"
                 ],
-                "summary": "Get Tag",
+                "summary": "List Filters",
                 "parameters": [
                     {
                         "type": "string",
@@ -218,7 +218,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.GetTagsResponse"
+                            "$ref": "#/definitions/dto.ListFiltersResponse"
                         }
                     },
                     "default": {
@@ -228,7 +228,9 @@ const docTemplate = `{
                         }
                     }
                 }
-            },
+            }
+        },
+        "/api/teams/{teamID}/tags": {
             "post": {
                 "description": "Create a new tag key",
                 "produces": [
@@ -676,17 +678,6 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.GetTagsResponse": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/db.Tag"
-                    }
-                }
-            }
-        },
         "dto.GetTeamsResponse": {
             "type": "object",
             "properties": {
@@ -712,6 +703,17 @@ const docTemplate = `{
             "properties": {
                 "data": {
                     "$ref": "#/definitions/db.Team"
+                }
+            }
+        },
+        "dto.ListFiltersResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/db.Tag"
+                    }
                 }
             }
         },

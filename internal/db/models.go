@@ -107,6 +107,14 @@ type Account struct {
 	UpdatedAt         time.Time `json:"updated_at"`
 }
 
+type MemberFilter struct {
+	ID           int32     `json:"id"`
+	MembershipID int32     `json:"membership_id"`
+	KeyID        int32     `json:"key_id"`
+	ValueID      int32     `json:"value_id"`
+	CreatedAt    time.Time `json:"created_at"`
+}
+
 type Session struct {
 	ID     pgtype.UUID `json:"id"`
 	UserID int32       `json:"user_id"`
@@ -134,14 +142,6 @@ type Team struct {
 	Name      string    `json:"name"`
 	Domain    string    `json:"domain"`
 	CreatedAt time.Time `json:"created_at"`
-}
-
-type TeamMemberTag struct {
-	ID           int32     `json:"id"`
-	MembershipID int32     `json:"membership_id"`
-	KeyID        int32     `json:"key_id"`
-	ValueID      int32     `json:"value_id"`
-	CreatedAt    time.Time `json:"created_at"`
 }
 
 type TeamMembership struct {

@@ -17,8 +17,8 @@ func NewTagRepo(d db.DBTX) *TagRepo {
 	}
 }
 
-func (r *TagRepo) ListTags(ctx context.Context, membershipID int32) ([]db.Tag, error) {
-	raw, err := r.q.ListTags(ctx, membershipID)
+func (r *TagRepo) ListFilters(ctx context.Context, membershipID int32) ([]db.Tag, error) {
+	raw, err := r.q.ListFilters(ctx, membershipID)
 	if err != nil {
 		return nil, err
 	}

@@ -35,7 +35,7 @@ type CreateTagValueBody struct {
 }
 
 // ------ request ------
-type GetTagsRequest struct {
+type ListFiltersRequest struct {
 	TeamPathParams
 }
 
@@ -67,7 +67,7 @@ type DeleteTagValueRequest struct {
 }
 
 // ------ response ------
-type GetTagsResponse struct {
+type ListFiltersResponse struct {
 	Data []db.Tag `json:"data"`
 }
 

@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS tag_values (
     CONSTRAINT unique_tag_value UNIQUE (key_id, value)
 );
 
-CREATE TABLE IF NOT EXISTS team_member_tags (
+CREATE TABLE IF NOT EXISTS member_filters (
     id SERIAL PRIMARY KEY,
     membership_id INTEGER NOT NULL REFERENCES team_memberships(id) ON DELETE CASCADE,
     key_id INTEGER NOT NULL REFERENCES tag_keys(id) ON DELETE CASCADE,
@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS team_member_tags (
 
 -- +goose Down
 -- +goose StatementBegin
-DROP TABLE IF EXISTS team_member_tags;
+DROP TABLE IF EXISTS member_filters;
 DROP TABLE IF EXISTS tag_values;
 DROP TABLE IF EXISTS tag_keys;
 
