@@ -2,9 +2,7 @@ package service
 
 import (
 	"context"
-	"errors"
 
-	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/skndash96/lastnight-backend/internal/auth"
 	"github.com/skndash96/lastnight-backend/internal/db"
@@ -34,15 +32,12 @@ func (s *authService) Login(ctx context.Context, email, password string) (string
 
 	u, err := authRepo.GetUserByEmail(ctx, email)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return "", NewSrvError(err, SrvErrInvalidInput, "invalid credentials")
-		}
-		return "", NewSrvError(err, SrvErrInternal, "something went wrong")
+		return "", err
 	}
 
 	accounts, err := authRepo.GetUserAccountsByID(ctx, u.ID)
 	if err != nil {
-		return "", NewSrvError(err, SrvErrInternal, "failed to get user accounts")
+		return "", err
 	}
 
 	var acc *db.Account
@@ -90,7 +85,7 @@ func (s *authService) Register(ctx context.Context, name, email, password string
 
 	acc, err := authRepo.CreateAccount(ctx, user.ID, "local", email, string(passwordHash))
 	if err != nil {
-		return "", NewSrvError(err, SrvErrInternal, "failed to create new account")
+		return "", err
 	}
 
 	err = tx.Commit(ctx)

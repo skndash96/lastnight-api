@@ -2,12 +2,15 @@ package api
 
 import (
 	"encoding/json"
+
 	"fmt"
+
 	"net/http"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
 	"github.com/skndash96/lastnight-backend/internal/dto"
+	"github.com/skndash96/lastnight-backend/internal/repository"
 	"github.com/skndash96/lastnight-backend/internal/service"
 )
 
@@ -29,6 +32,10 @@ func ErrorHandler(err error, c echo.Context) {
 	} else if vErr, ok := err.(validator.ValidationErrors); ok {
 		msg = CustomValidationErrMsg(&vErr)
 		code = http.StatusBadRequest
+	} else if repoErr, ok := err.(*repository.RepoError); ok {
+		err = repoErr.Unwrap()
+		code = mapRepoErrorToApiError(repoErr)
+		msg = repoErr.Message
 	} else if srvErr, ok := err.(*service.SrvError); ok {
 		err = srvErr.Unwrap()
 		code = mapSrvErrorToApiError(srvErr)
@@ -37,10 +44,6 @@ func ErrorHandler(err error, c echo.Context) {
 		code = httpErr.Code
 		msg = httpErr.Message.(string)
 	}
-
-	// if code >= 500 {
-	// 	c.Logger().Errorf("%T %v", err, err)
-	// }
 
 	c.JSON(code, &dto.ErrorResponse{
 		Message: msg,
@@ -62,6 +65,24 @@ func mapSrvErrorToApiError(err *service.SrvError) int {
 	case service.SrvErrNotFound:
 		code = http.StatusNotFound
 	case service.SrvErrConflict:
+		code = http.StatusConflict
+	default:
+		code = http.StatusInternalServerError
+	}
+
+	return code
+
+}
+
+func mapRepoErrorToApiError(err *repository.RepoError) int {
+	var (
+		code int
+	)
+
+	switch err.Kind {
+	case repository.RepoErrInvalidInput:
+		code = http.StatusBadRequest
+	case repository.RepoErrConflict:
 		code = http.StatusConflict
 	default:
 		code = http.StatusInternalServerError

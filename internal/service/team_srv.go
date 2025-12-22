@@ -2,10 +2,8 @@ package service
 
 import (
 	"context"
-	"errors"
 	"strings"
 
-	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/skndash96/lastnight-backend/internal/db"
 	"github.com/skndash96/lastnight-backend/internal/repository"
@@ -25,12 +23,8 @@ func (s *TeamService) GetTeamsByUserID(ctx context.Context, userID int32) ([]db.
 	teamRepo := repository.NewTeamRepository(s.db)
 
 	teams, err := teamRepo.GetTeamsByUserID(ctx, userID)
-
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, NewSrvError(nil, SrvErrNotFound, "team not found")
-		}
-		return nil, NewSrvError(err, SrvErrInternal, "failed to query teams")
+		return nil, err
 	}
 
 	return teams, nil
@@ -62,15 +56,12 @@ func (s *TeamService) JoinDefaultTeam(ctx context.Context, userID int32, userEma
 	team, err := teamRepo.GetTeamByDomain(ctx, domain)
 
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, NewSrvError(nil, SrvErrNotFound, "team not found")
-		}
-		return nil, NewSrvError(err, SrvErrInternal, "failed to find team")
+		return nil, err
 	}
 
 	_, err = s.joinTeam(ctx, userID, team.ID)
 	if err != nil {
-		return nil, NewSrvError(err, SrvErrInternal, "failed to join team")
+		return nil, err
 	}
 
 	return &team, nil

@@ -35,25 +35,24 @@ func (s *TagService) UpdateFilters(ctx context.Context, membershipID int32, filt
 	defer tx.Rollback(ctx)
 
 	tagRepo := repository.NewTagRepo(tx)
-	err = tagRepo.DeleteAllFilters(ctx, membershipID)
-	if err != nil {
-		return NewSrvError(err, SrvErrInternal, "failed to update filters")
+
+	if err := tagRepo.DeleteAllFilters(ctx, membershipID); err != nil {
+		return err
 	}
 
 	for _, filter := range *filters {
-		err := tagRepo.CreateFilter(ctx, membershipID, filter[0], filter[1])
-		if err != nil {
-			return NewSrvError(err, SrvErrInternal, "failed to update filters")
+		if err := tagRepo.CreateFilter(ctx, membershipID, filter[0], filter[1]); err != nil {
+			return err
 		}
 	}
 
-	err = tx.Commit(ctx)
-	if err != nil {
+	if err := tx.Commit(ctx); err != nil {
 		return NewSrvError(err, SrvErrInternal, "Failed to update filters")
 	}
 
 	return nil
 }
+
 
 func (s *TagService) CreateTagKey(ctx context.Context, teamID int32, name string, dataType db.TagDataType) (*db.TagKey, error) {
 	tagRepo := repository.NewTagRepo(s.db)
