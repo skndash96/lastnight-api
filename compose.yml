@@ -4,23 +4,34 @@ services:
     volumes:
       - lastnight-db:/var/lib/postgresql/data
     env_file:
-      - .env
+      - .env.pg
     ports:
       - "5432:5432"
+
+  minio:
+    image: minio/minio:RELEASE.2025-06-13T11-33-47Z
+    env_file:
+      - .env.minio
+    volumes:
+      - lastnight-minio:/data
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    command: server /data --address ":9000" --console-address ":9001"
 
   redis:
     image: redis:7.2-alpine
     env_file:
-      - .env
+      - .env.redis
     volumes:
-      - redis-data:/data
+      - lastnight-redis:/data
     ports:
       - "6379:6379"
 
   pgadmin:
     image: dpage/pgadmin4:8.4
     env_file:
-      - .env
+      - .env.pgadmin
     volumes:
       - lastnight-pgadmin:/var/lib/pgadmin
     ports:
@@ -31,3 +42,5 @@ services:
 volumes:
   lastnight-db:
   lastnight-pgadmin:
+  lastnight-minio:
+  lastnight-redis:

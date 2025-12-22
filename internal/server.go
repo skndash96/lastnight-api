@@ -36,7 +36,7 @@ func Server() error {
 	e.HTTPErrorHandler = ErrorHandler
 
 	e.Use(middleware.CORS())
-	e.Use(middleware.Logger())
+	e.Use(middleware.RequestLogger())
 	e.Use(middleware.Recover())
 	e.Use(middleware.RemoveTrailingSlash())
 

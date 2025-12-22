@@ -12,6 +12,7 @@ type AppConfig struct {
 	Port   int
 	DbURL  string
 	Auth   AuthConfig
+	Minio  MinioConfig
 }
 
 type AuthConfig struct {
@@ -27,6 +28,16 @@ type CookieConfig struct {
 	Name     string
 	Secure   bool
 	SameSite http.SameSite
+}
+
+type MinioConfig struct {
+	Endpoint   string
+	Username   string
+	Password   string
+	UseSSL     bool
+	BucketName string
+	Expiration time.Duration
+	MaxSize    int64
 }
 
 func New() *AppConfig {
@@ -54,6 +65,16 @@ func New() *AppConfig {
 				Secure:   isProd,
 				SameSite: http.SameSiteLaxMode,
 			},
+		},
+
+		Minio: MinioConfig{
+			Endpoint:   GetEnv("MINIO_ENDPOINT", ""),
+			Username:  GetEnv("MINIO_USERNAME", ""),
+			Password:  GetEnv("MINIO_PASSWORD", ""),
+			BucketName: GetEnv("MINIO_BUCKET_NAME", ""),
+			Expiration: time.Duration(15 * time.Minute),
+			UseSSL:     isProd,
+			MaxSize:    200 * 1024 * 1024, // 200MB
 		},
 	}
 

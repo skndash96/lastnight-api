@@ -249,7 +249,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.UpdateFiltersRequest"
+                            "$ref": "#/definitions/dto.UpdateFiltersBody"
                         }
                     }
                 ],
@@ -500,6 +500,53 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/api/teams/{teamID}/uploads/presign": {
+            "post": {
+                "description": "Create a pre-signed request for uploading files to S3 via POST policy",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Upload"
+                ],
+                "summary": "Create pre-signed request",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Team ID",
+                        "name": "teamID",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Presign request",
+                        "name": "upload_request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.PresignUploadsBody"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/dto.PresignUploadsResponse"
+                        }
+                    },
+                    "default": {
+                        "description": "",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -554,6 +601,7 @@ const docTemplate = `{
                     "x-nullable": true
                 },
                 "value_id": {
+                    "description": "pointers because they can be null",
                     "type": "integer",
                     "x-nullable": true
                 }
@@ -768,6 +816,42 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.PresignUploadResult": {
+            "type": "object",
+            "properties": {
+                "fields": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "url": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.PresignUploadsBody": {
+            "type": "object",
+            "properties": {
+                "files": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/provider.IncomingFile"
+                    }
+                }
+            }
+        },
+        "dto.PresignUploadsResponse": {
+            "type": "object",
+            "properties": {
+                "results": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.PresignUploadResult"
+                    }
+                }
+            }
+        },
         "dto.RegisterRequest": {
             "type": "object",
             "required": [
@@ -788,11 +872,10 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.UpdateFiltersRequest": {
+        "dto.UpdateFiltersBody": {
             "type": "object",
             "required": [
-                "filters",
-                "teamID"
+                "filters"
             ],
             "properties": {
                 "filters": {
@@ -812,9 +895,6 @@ const docTemplate = `{
                             }
                         }
                     }
-                },
-                "teamID": {
-                    "type": "integer"
                 }
             }
         },
@@ -836,6 +916,21 @@ const docTemplate = `{
             "properties": {
                 "data": {
                     "$ref": "#/definitions/db.TagKey"
+                }
+            }
+        },
+        "provider.IncomingFile": {
+            "type": "object",
+            "properties": {
+                "mime": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "size": {
+                    "type": "integer",
+                    "format": "int64"
                 }
             }
         }

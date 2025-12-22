@@ -33,6 +33,7 @@ definitions:
         type: string
         x-nullable: true
       value_id:
+        description: pointers because they can be null
         type: integer
         x-nullable: true
     type: object
@@ -174,6 +175,29 @@ definitions:
     - email
     - password
     type: object
+  dto.PresignUploadResult:
+    properties:
+      fields:
+        additionalProperties:
+          type: string
+        type: object
+      url:
+        type: string
+    type: object
+  dto.PresignUploadsBody:
+    properties:
+      files:
+        items:
+          $ref: '#/definitions/provider.IncomingFile'
+        type: array
+    type: object
+  dto.PresignUploadsResponse:
+    properties:
+      results:
+        items:
+          $ref: '#/definitions/dto.PresignUploadResult'
+        type: array
+    type: object
   dto.RegisterRequest:
     properties:
       email:
@@ -188,7 +212,7 @@ definitions:
     - name
     - password
     type: object
-  dto.UpdateFiltersRequest:
+  dto.UpdateFiltersBody:
     properties:
       filters:
         items:
@@ -202,11 +226,8 @@ definitions:
           - value_id
           type: object
         type: array
-      teamID:
-        type: integer
     required:
     - filters
-    - teamID
     type: object
   dto.UpdateTagKeyBody:
     properties:
@@ -221,6 +242,16 @@ definitions:
     properties:
       data:
         $ref: '#/definitions/db.TagKey'
+    type: object
+  provider.IncomingFile:
+    properties:
+      mime:
+        type: string
+      name:
+        type: string
+      size:
+        format: int64
+        type: integer
     type: object
 info:
   contact:
@@ -364,7 +395,7 @@ paths:
         name: filters
         required: true
         schema:
-          $ref: '#/definitions/dto.UpdateFiltersRequest'
+          $ref: '#/definitions/dto.UpdateFiltersBody'
       produces:
       - application/json
       responses:
@@ -534,6 +565,38 @@ paths:
       summary: Delete Tag Value
       tags:
       - Tag
+  /api/teams/{teamID}/uploads/presign:
+    post:
+      consumes:
+      - application/json
+      description: Create a pre-signed request for uploading files to S3 via POST
+        policy
+      parameters:
+      - description: Team ID
+        in: path
+        name: teamID
+        required: true
+        type: string
+      - description: Presign request
+        in: body
+        name: upload_request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.PresignUploadsBody'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/dto.PresignUploadsResponse'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Create pre-signed request
+      tags:
+      - Upload
   /api/teams/default:
     post:
       description: Join the default team for the user

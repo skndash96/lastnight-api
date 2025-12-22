@@ -1,11 +1,14 @@
 package api
 
 import (
+	"log"
+
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/labstack/echo/v4"
 	"github.com/skndash96/lastnight-backend/internal/auth"
 	"github.com/skndash96/lastnight-backend/internal/config"
 	"github.com/skndash96/lastnight-backend/internal/handler"
+	"github.com/skndash96/lastnight-backend/internal/provider"
 	"github.com/skndash96/lastnight-backend/internal/repository"
 	"github.com/skndash96/lastnight-backend/internal/service"
 )
@@ -16,7 +19,11 @@ func RegisterRoutes(e *echo.Echo, cfg *config.AppConfig, pool *pgxpool.Pool) {
 	authRepo := repository.NewAuthRepository(pool)
 	teamRepo := repository.NewTeamRepository(pool)
 
-	sessionProvider := auth.NewSessionProvider(cfg.Auth.Session, authRepo)
+	sessionProvider := provider.NewSessionProvider(cfg.Auth.Session, authRepo)
+	uploadProvider, err := provider.NewUploadProvider(cfg.Minio)
+	if err != nil {
+		log.Fatalf("failed to initialize upload provider: %v", err)
+	}
 
 	r.Use(auth.SessionMW(sessionProvider, cfg.Auth.Cookie))
 
@@ -60,5 +67,13 @@ func RegisterRoutes(e *echo.Echo, cfg *config.AppConfig, pool *pgxpool.Pool) {
 
 		teamG.POST("/tags/:tagID/values", tag_h.CreateTagValue)
 		teamG.DELETE("/tags/:tagID/values/:tagValueID", tag_h.DeleteTagValue)
+
+		{
+			uploadSrv := service.NewUploadService(uploadProvider)
+			h := handler.NewUploadHandler(uploadSrv)
+
+			uploadsG := teamG.Group("/uploads")
+			uploadsG.POST("/presign", h.PresignUploads)
+		}
 	}
 }

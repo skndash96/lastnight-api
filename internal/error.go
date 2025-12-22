@@ -15,6 +15,10 @@ import (
 )
 
 func ErrorHandler(err error, c echo.Context) {
+	if c.Response().Committed {
+		return
+	}
+
 	var (
 		code int    = http.StatusInternalServerError
 		msg  string = "internal server error"
