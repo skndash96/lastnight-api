@@ -1,18 +1,27 @@
 package dto
 
 import (
-	"github.com/skndash96/lastnight-backend/internal/provider"
+	"github.com/skndash96/lastnight-backend/internal/service"
 )
 
 // ------ body ------
 type PresignUploadsBody struct {
-	Files []*provider.IncomingFile `json:"files"`
+	Files []*service.PresignUploadItem `json:"files"`
+}
+
+type CompleteUploadsBody struct {
+	Files []*service.CompleteUploadItem `json:"files"`
 }
 
 // ------ request ------
 type PresignUploadsRequest struct {
 	TeamPathParams
 	PresignUploadsBody
+}
+
+type CompleteUploadsRequest struct {
+	TeamPathParams
+	CompleteUploadsBody
 }
 
 // ------ response ------

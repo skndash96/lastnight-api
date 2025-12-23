@@ -90,6 +90,13 @@ definitions:
     x-enum-varnames:
     - TeamUserRoleMember
     - TeamUserRoleMod
+  dto.CompleteUploadsBody:
+    properties:
+      files:
+        items:
+          $ref: '#/definitions/service.CompleteUploadItem'
+        type: array
+    type: object
   dto.CreateTagKeyBody:
     properties:
       data_type:
@@ -188,7 +195,7 @@ definitions:
     properties:
       files:
         items:
-          $ref: '#/definitions/provider.IncomingFile'
+          $ref: '#/definitions/service.PresignUploadItem'
         type: array
     type: object
   dto.PresignUploadsResponse:
@@ -243,7 +250,19 @@ definitions:
       data:
         $ref: '#/definitions/db.TagKey'
     type: object
-  provider.IncomingFile:
+  service.CompleteUploadItem:
+    properties:
+      key:
+        type: string
+      mime:
+        type: string
+      name:
+        type: string
+      size:
+        format: int64
+        type: integer
+    type: object
+  service.PresignUploadItem:
     properties:
       mime:
         type: string
@@ -565,6 +584,36 @@ paths:
       summary: Delete Tag Value
       tags:
       - Tag
+  /api/teams/{teamID}/uploads/complete:
+    post:
+      consumes:
+      - application/json
+      description: Call this route after client-side uploading to the bucket via POST
+        policy. Processes uploaded files.
+      parameters:
+      - description: Team ID
+        in: path
+        name: teamID
+        required: true
+        type: string
+      - description: Complete upload request
+        in: body
+        name: upload_request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CompleteUploadsBody'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Complete upload
+      tags:
+      - Upload
   /api/teams/{teamID}/uploads/presign:
     post:
       consumes:

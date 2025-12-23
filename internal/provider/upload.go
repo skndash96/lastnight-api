@@ -3,21 +3,17 @@ package provider
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/url"
-	"path"
-	"strconv"
-	"strings"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 	"github.com/skndash96/lastnight-backend/internal/config"
 )
 
 type UploadProvider interface {
-	PresignUpload(ctx context.Context, teamID int32, file *IncomingFile) (*url.URL, map[string]string, error)
+	PresignUpload(ctx context.Context, key, name, mime string, size int64) (*url.URL, map[string]string, error)
+	MoveObject(ctx context.Context, dstKey, srcKey string) error
 }
 
 type uploadProvider struct {
@@ -55,25 +51,17 @@ func NewUploadProvider(cfg config.MinioConfig) (UploadProvider, error) {
 	}, nil
 }
 
-type IncomingFile struct {
-	Name string
-	Size int64
-	Mime string
-}
-
-func (p *uploadProvider) PresignUpload(ctx context.Context, teamID int32, file *IncomingFile) (*url.URL, map[string]string, error) {
-	if file.Size > 11*p.cfg.MaxSize/10 {
+func (p *uploadProvider) PresignUpload(ctx context.Context, key, name, mime string, size int64) (*url.URL, map[string]string, error) {
+	if size > p.cfg.MaxSize {
 		return nil, nil, ErrFileTooLarge
-	} else if !strings.HasPrefix(file.Mime, "image/") && !strings.HasPrefix(file.Mime, "application/") {
-		return nil, nil, ErrInvalidFileType
 	}
 
 	policy := minio.NewPostPolicy()
 	policy.SetExpires(time.Now().Add(p.cfg.Expiration))
 	policy.SetBucket(p.cfg.BucketName)
-	policy.SetContentLengthRange(9*file.Size/10, 11*file.Size/10)
-	policy.SetContentType(file.Mime)
-	policy.SetKey(p.GenerateObjectKey(strconv.FormatInt(int64(teamID), 10), file.Name))
+	policy.SetContentLengthRange(9*size/10, 11*size/10)
+	policy.SetContentType(mime)
+	policy.SetKey(key)
 
 	url, fields, err := p.client.PresignedPostPolicy(ctx, policy)
 	if err != nil {
@@ -83,13 +71,31 @@ func (p *uploadProvider) PresignUpload(ctx context.Context, teamID int32, file *
 	return url, fields, nil
 }
 
-func (p *uploadProvider) GenerateObjectKey(teamID, originalName string) string {
-	ext := path.Ext(originalName)
-	if len(ext) > 10 { // sanity cap
-		ext = ""
+func (p *uploadProvider) MoveObject(ctx context.Context, dst, src string) error {
+	_, err := p.client.CopyObject(ctx, minio.CopyDestOptions{
+		Bucket: p.cfg.BucketName,
+		Object: dst,
+	}, minio.CopySrcOptions{
+		Bucket: p.cfg.BucketName,
+		Object: src,
+	})
+
+	if err != nil {
+		return err
 	}
 
-	id := uuid.NewString()
+	err = p.client.RemoveObject(ctx, p.cfg.BucketName, src, minio.RemoveObjectOptions{})
+	if err != nil {
+		return err
+	}
 
-	return fmt.Sprintf("team_%s/uploads/%s%s", teamID, id, strings.ToLower(ext))
+	return nil
+}
+
+func (p *uploadProvider) DeleteObject(ctx context.Context, objectKey string) error {
+	err := p.client.RemoveObject(ctx, p.cfg.BucketName, objectKey, minio.RemoveObjectOptions{})
+	if err != nil {
+		return err
+	}
+	return nil
 }

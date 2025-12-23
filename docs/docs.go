@@ -501,6 +501,50 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/teams/{teamID}/uploads/complete": {
+            "post": {
+                "description": "Call this route after client-side uploading to the bucket via POST policy. Processes uploaded files.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Upload"
+                ],
+                "summary": "Complete upload",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Team ID",
+                        "name": "teamID",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Complete upload request",
+                        "name": "upload_request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.CompleteUploadsBody"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "default": {
+                        "description": "",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/teams/{teamID}/uploads/presign": {
             "post": {
                 "description": "Create a pre-signed request for uploading files to S3 via POST policy",
@@ -685,6 +729,17 @@ const docTemplate = `{
                 "TeamUserRoleMod"
             ]
         },
+        "dto.CompleteUploadsBody": {
+            "type": "object",
+            "properties": {
+                "files": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/service.CompleteUploadItem"
+                    }
+                }
+            }
+        },
         "dto.CreateTagKeyBody": {
             "type": "object",
             "required": [
@@ -836,7 +891,7 @@ const docTemplate = `{
                 "files": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/provider.IncomingFile"
+                        "$ref": "#/definitions/service.PresignUploadItem"
                     }
                 }
             }
@@ -919,7 +974,25 @@ const docTemplate = `{
                 }
             }
         },
-        "provider.IncomingFile": {
+        "service.CompleteUploadItem": {
+            "type": "object",
+            "properties": {
+                "key": {
+                    "type": "string"
+                },
+                "mime": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "size": {
+                    "type": "integer",
+                    "format": "int64"
+                }
+            }
+        },
+        "service.PresignUploadItem": {
             "type": "object",
             "properties": {
                 "mime": {

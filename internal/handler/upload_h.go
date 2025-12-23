@@ -63,3 +63,33 @@ func (h *uploadHandler) PresignUploads(c echo.Context) error {
 
 	return nil
 }
+
+// @Summary Complete upload
+// @Description Call this route after client-side uploading to the bucket via POST policy. Processes uploaded files.
+// @Tags Upload
+// @Accept json
+// @Param teamID path string true "Team ID"
+// @Param upload_request body dto.CompleteUploadsBody true "Complete upload request"
+// @Produce json
+// @Success 200
+// @Failure default {object} dto.ErrorResponse
+// @Router /api/teams/{teamID}/uploads/complete [post]
+func (h *uploadHandler) CompleteUploads(c echo.Context) error {
+	v := dto.CompleteUploadsRequest{}
+	if err := c.Bind(&v); err != nil {
+		return err
+	}
+
+	if err := c.Validate(&v); err != nil {
+		return err
+	}
+
+	err := h.uploadSrv.CompleteUploads(c.Request().Context(), v.Files)
+	if err != nil {
+		return err
+	}
+
+	c.NoContent(http.StatusCreated)
+
+	return nil
+}

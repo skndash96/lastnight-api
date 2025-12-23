@@ -74,6 +74,7 @@ func RegisterRoutes(e *echo.Echo, cfg *config.AppConfig, pool *pgxpool.Pool) {
 
 			uploadsG := teamG.Group("/uploads")
 			uploadsG.POST("/presign", h.PresignUploads)
+			uploadsG.POST("/complete", h.CompleteUploads)
 		}
 	}
 }

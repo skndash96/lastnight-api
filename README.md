@@ -46,3 +46,44 @@ INSERT INTO tag_values(key_id, value) VALUES
 (3, '1'),
 (3, '2');
 ```
+
+uploading file
+```js
+(async function uploadPdf() {
+	const file = new File([1,2,3,4], "fake.png", { "type": "application/pdf" })
+
+  const data = {
+    "url": "http://localhost:9000/lastnight/",
+    "fields": {
+      "Content-Type": "application/pdf",
+      "bucket": "lastnight",
+      "key": "tmp/team_1/uploads/0559116c-3b35-4280-b71c-07f2dc81bc50.pdf",
+      "policy": "eyJleHBpcmF0aW9uIjoiMjAyNS0xMi0yM1QwNTo1MTowMC40MDdaIiwiY29uZGl0aW9ucyI6W1siZXEiLCIkYnVja2V0IiwibGFzdG5pZ2h0Il0sWyJlcSIsIiRDb250ZW50LVR5cGUiLCJhcHBsaWNhdGlvbi9wZGYiXSxbImVxIiwiJGtleSIsInRtcC90ZWFtXzEvdXBsb2Fkcy8wNTU5MTE2Yy0zYjM1LTQyODAtYjcxYy0wN2YyZGM4MWJjNTAucGRmIl0sWyJlcSIsIiR4LWFtei1kYXRlIiwiMjAyNTEyMjNUMDUzNjAwWiJdLFsiZXEiLCIkeC1hbXotYWxnb3JpdGhtIiwiQVdTNC1ITUFDLVNIQTI1NiJdLFsiZXEiLCIkeC1hbXotY3JlZGVudGlhbCIsImFkbWluLzIwMjUxMjIzL3VzLWVhc3QtMS9zMy9hd3M0X3JlcXVlc3QiXSxbImNvbnRlbnQtbGVuZ3RoLXJhbmdlIiwgMywgNF1dfQ==",
+      "x-amz-algorithm": "AWS4-HMAC-SHA256",
+      "x-amz-credential": "admin/20251223/us-east-1/s3/aws4_request",
+      "x-amz-date": "20251223T053600Z",
+      "x-amz-signature": "bb32dcb7a7678dd07320edc6a3406e710f320b46e74a5e998a7a5aa59a1e0ff0"
+    }
+  };
+
+  const form = new FormData();
+
+  for (const [k, v] of Object.entries(data.fields)) {
+    form.append(k, v);
+  }
+
+  form.append("file", file);
+
+  const res = await fetch(data.url, {
+    method: "POST",
+    body: form,
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text);
+  }
+
+  return true;
+})()
+```
