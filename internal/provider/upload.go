@@ -14,6 +14,8 @@ import (
 type UploadProvider interface {
 	PresignUpload(ctx context.Context, key, name, mime string, size int64) (*url.URL, map[string]string, error)
 	MoveObject(ctx context.Context, dstKey, srcKey string) error
+	DeleteObject(ctx context.Context, key string) error
+	GetUploadInfo(ctx context.Context, key string) (*UploadInfo, error)
 }
 
 type uploadProvider struct {
@@ -98,4 +100,21 @@ func (p *uploadProvider) DeleteObject(ctx context.Context, objectKey string) err
 		return err
 	}
 	return nil
+}
+
+type UploadInfo struct {
+	SHA256 string
+	Size   int64
+}
+
+func (p *uploadProvider) GetUploadInfo(ctx context.Context, objectKey string) (*UploadInfo, error) {
+	attr, err := p.client.GetObjectAttributes(ctx, p.cfg.BucketName, objectKey, minio.ObjectAttributesOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	return &UploadInfo{
+		SHA256: attr.Checksum.ChecksumSHA256,
+		Size:   int64(attr.ObjectSize),
+	}, nil
 }

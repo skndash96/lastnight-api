@@ -69,12 +69,12 @@ func RegisterRoutes(e *echo.Echo, cfg *config.AppConfig, pool *pgxpool.Pool) {
 		teamG.DELETE("/tags/:tagID/values/:tagValueID", tag_h.DeleteTagValue)
 
 		{
-			uploadSrv := service.NewUploadService(uploadProvider)
+			uploadSrv := service.NewUploadService(uploadProvider, pool)
 			h := handler.NewUploadHandler(uploadSrv)
 
 			uploadsG := teamG.Group("/uploads")
-			uploadsG.POST("/presign", h.PresignUploads)
-			uploadsG.POST("/complete", h.CompleteUploads)
+			uploadsG.POST("/presign", h.PresignUpload)
+			uploadsG.POST("/complete", h.CompleteUpload)
 		}
 	}
 }

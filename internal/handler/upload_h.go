@@ -24,18 +24,18 @@ func NewUploadHandler(uploadSrv *service.UploadService) *uploadHandler {
 // @Tags Upload
 // @Accept json
 // @Param teamID path string true "Team ID"
-// @Param upload_request body dto.PresignUploadsBody true "Presign request"
+// @Param upload_request body dto.PresignUploadBody true "Presign request"
 // @Produce json
-// @Success 201 {object} dto.PresignUploadsResponse
+// @Success 201 {object} dto.PresignUploadResponse
 // @Failure default {object} dto.ErrorResponse
 // @Router /api/teams/{teamID}/uploads/presign [post]
-func (h *uploadHandler) PresignUploads(c echo.Context) error {
+func (h *uploadHandler) PresignUpload(c echo.Context) error {
 	session, ok := auth.GetSession(c)
 	if !ok {
 		return echo.ErrUnauthorized
 	}
 
-	v := dto.PresignUploadsRequest{}
+	v := dto.PresignUploadRequest{}
 	if err := c.Bind(&v); err != nil {
 		return err
 	}
@@ -44,38 +44,36 @@ func (h *uploadHandler) PresignUploads(c echo.Context) error {
 		return err
 	}
 
-	_results, err := h.uploadSrv.PresignUploads(c.Request().Context(), session.TeamID, v.Files)
+	result, err := h.uploadSrv.PresignUpload(c.Request().Context(), session.TeamID, v.Name, v.MimeType, v.Size)
 	if err != nil {
 		return err
 	}
 
-	results := make([]dto.PresignUploadResult, len(_results))
-	for i, result := range _results {
-		results[i] = dto.PresignUploadResult{
-			Url:    result.Url.String(),
-			Fields: result.Fields,
-		}
-	}
-
-	c.JSON(http.StatusOK, &dto.PresignUploadsResponse{
-		Results: results,
+	c.JSON(http.StatusOK, &dto.PresignUploadResponse{
+		Url:    result.Url.String(),
+		Fields: result.Fields,
 	})
 
 	return nil
 }
 
 // @Summary Complete upload
-// @Description Call this route after client-side uploading to the bucket via POST policy. Processes uploaded files.
+// @Description Call this route after client-side uploading to the bucket via POST policy. Processes uploaded file.
 // @Tags Upload
 // @Accept json
 // @Param teamID path string true "Team ID"
-// @Param upload_request body dto.CompleteUploadsBody true "Complete upload request"
+// @Param upload_request body dto.CompleteUploadBody true "Complete upload request"
 // @Produce json
 // @Success 200
 // @Failure default {object} dto.ErrorResponse
 // @Router /api/teams/{teamID}/uploads/complete [post]
-func (h *uploadHandler) CompleteUploads(c echo.Context) error {
-	v := dto.CompleteUploadsRequest{}
+func (h *uploadHandler) CompleteUpload(c echo.Context) error {
+	session, ok := auth.GetSession(c)
+	if !ok {
+		return echo.ErrUnauthorized
+	}
+
+	v := dto.CompleteUploadRequest{}
 	if err := c.Bind(&v); err != nil {
 		return err
 	}
@@ -84,7 +82,12 @@ func (h *uploadHandler) CompleteUploads(c echo.Context) error {
 		return err
 	}
 
-	err := h.uploadSrv.CompleteUploads(c.Request().Context(), v.Files)
+	tags := make([][]int32, len(v.Tags))
+	for i, tag := range v.Tags {
+		tags[i] = []int32{tag.KeyID, tag.ValueID}
+	}
+
+	err := h.uploadSrv.CompleteUpload(c.Request().Context(), session.TeamID, session.UserID, v.Key, v.Name, v.MimeType, tags)
 	if err != nil {
 		return err
 	}

@@ -152,6 +152,32 @@ type TeamMembership struct {
 	JoinedAt time.Time    `json:"joined_at"`
 }
 
+type Upload struct {
+	ID           int32     `json:"id"`
+	StorageKey   string    `json:"storage_key"`
+	FileSha256   string    `json:"file_sha256"`
+	FileSize     int64     `json:"file_size"`
+	FileMimeType string    `json:"file_mime_type"`
+	CreatedAt    time.Time `json:"created_at"`
+}
+
+type UploadRef struct {
+	ID         int32     `json:"id"`
+	UploadID   int32     `json:"upload_id"`
+	UploaderID int32     `json:"uploader_id"`
+	TeamID     int32     `json:"team_id"`
+	FileName   string    `json:"file_name"`
+	CreatedAt  time.Time `json:"created_at"`
+}
+
+type UploadRefTag struct {
+	ID          int32     `json:"id"`
+	UploadRefID int32     `json:"upload_ref_id"`
+	KeyID       int32     `json:"key_id"`
+	ValueID     int32     `json:"value_id"`
+	CreatedAt   time.Time `json:"created_at"`
+}
+
 type User struct {
 	ID        int32     `json:"id"`
 	Email     string    `json:"email"`

@@ -1,34 +1,35 @@
 package dto
 
-import (
-	"github.com/skndash96/lastnight-backend/internal/service"
-)
-
 // ------ body ------
-type PresignUploadsBody struct {
-	Files []*service.PresignUploadItem `json:"files"`
+type PresignUploadBody struct {
+	Name     string `json:"name"`
+	MimeType string `json:"mime_type"`
+	Size     int64  `json:"size"`
 }
 
-type CompleteUploadsBody struct {
-	Files []*service.CompleteUploadItem `json:"files"`
+type CompleteUploadBody struct {
+	Key      string `json:"key"`
+	Name     string `json:"name"`
+	MimeType string `json:"mime_type"`
+	Tags     []struct {
+		KeyID   int32 `json:"keyID"`
+		ValueID int32 `json:"valueID"`
+	} `json:"tags"`
 }
 
 // ------ request ------
-type PresignUploadsRequest struct {
+type PresignUploadRequest struct {
 	TeamPathParams
-	PresignUploadsBody
+	PresignUploadBody
 }
 
-type CompleteUploadsRequest struct {
+type CompleteUploadRequest struct {
 	TeamPathParams
-	CompleteUploadsBody
+	CompleteUploadBody
 }
 
 // ------ response ------
-type PresignUploadResult struct {
+type PresignUploadResponse struct {
 	Url    string            `json:"url"`
 	Fields map[string]string `json:"fields"`
-}
-type PresignUploadsResponse struct {
-	Results []PresignUploadResult `json:"results"`
 }

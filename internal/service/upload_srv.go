@@ -8,15 +8,19 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/skndash96/lastnight-backend/internal/provider"
+	"github.com/skndash96/lastnight-backend/internal/repository"
 )
 
 type UploadService struct {
+	pool           *pgxpool.Pool
 	uploadProvider provider.UploadProvider
 }
 
-func NewUploadService(uploadProvider provider.UploadProvider) *UploadService {
+func NewUploadService(uploadProvider provider.UploadProvider, pool *pgxpool.Pool) *UploadService {
 	return &UploadService{
+		pool:           pool,
 		uploadProvider: uploadProvider,
 	}
 }
@@ -26,65 +30,81 @@ type PresignUploadResult struct {
 	Fields map[string]string
 }
 
-type PresignUploadItem struct {
-	Name string
-	Mime string
-	Size int64
+func (s *UploadService) PresignUpload(ctx context.Context, teamID int32, name, mimeType string, size int64) (*PresignUploadResult, error) {
+	// Allow only application/* mime types
+	// TODO: Support image/* mime types while combining images to PDF if done so
+	if !strings.HasPrefix(mimeType, "application/") {
+		return nil, NewSrvError(nil, SrvErrInvalidInput, "Upload presign failed: Only application/* mime types are allowed.")
+	}
+
+	key := generateTmpObjectKey(teamID, name)
+	url, fields, err := s.uploadProvider.PresignUpload(ctx, key, name, mimeType, size)
+	if err != nil {
+		// TODO: Handle error properly
+		return nil, NewSrvError(err, SrvErrInternal, fmt.Sprintf("failed to presign upload for file %s", name))
+	}
+
+	return &PresignUploadResult{
+		Url:    url,
+		Fields: fields,
+	}, nil
 }
 
-func (s *UploadService) PresignUploads(ctx context.Context, teamID int32, files []*PresignUploadItem) ([]PresignUploadResult, error) {
-	results := make([]PresignUploadResult, len(files))
+func (s *UploadService) CompleteUpload(ctx context.Context, teamID, userID int32, tmpKey, name, mime string, tags [][]int32) error {
+	info, err := s.uploadProvider.GetUploadInfo(ctx, tmpKey)
+	if err != nil {
+		return NewSrvError(err, SrvErrInternal, fmt.Sprintf("failed to get upload info for %s", tmpKey))
+	}
 
-	for _, file := range files {
-		// Allow only application/* mime types
-		// TODO: Support image/* mime types, also handle combining images to PDF if done so
-		if !strings.HasPrefix(file.Mime, "application/") {
-			return nil, NewSrvError(nil, SrvErrInvalidInput, "Upload presign failed: Only application/* mime types are allowed.")
+	newKey := convertTmpKey(tmpKey)
+	if newKey == "" {
+		return NewSrvError(nil, SrvErrInvalidInput, "Upload completion failed: invalid key")
+	}
+
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return NewSrvError(err, SrvErrInternal, "failed to begin transaction")
+	}
+	defer tx.Rollback(ctx)
+
+	uploadRepo := repository.NewUploadRepository(tx)
+
+	// (hash, size) duplication check happens here
+	upload, err := uploadRepo.GetOrCreateUpload(ctx, newKey, mime, info.Size, info.SHA256)
+	if err != nil {
+		return NewSrvError(err, SrvErrInternal, fmt.Sprintf("failed to create upload for %s", newKey))
+	}
+
+	uploadRef, err := uploadRepo.CreateUploadRef(ctx, upload.ID, teamID, userID, name)
+	if err != nil {
+		return NewSrvError(err, SrvErrInternal, fmt.Sprintf("failed to create upload reference for %s", newKey))
+	}
+
+	for _, tag := range tags {
+		if err := uploadRepo.CreateUploadRefTag(ctx, uploadRef.ID, tag[0], tag[1]); err != nil {
+			return NewSrvError(err, SrvErrInternal, fmt.Sprintf("failed to create upload tag for %s", newKey))
 		}
 	}
 
-	for i, file := range files {
-		key := generateTmpObjectKey(teamID, file.Name)
-		url, fields, err := s.uploadProvider.PresignUpload(ctx, key, file.Name, file.Mime, file.Size)
+	if err := tx.Commit(ctx); err != nil {
+		return NewSrvError(err, SrvErrInternal, "failed to complete upload")
+	}
+
+	if upload.Created == false {
+		if err := s.uploadProvider.DeleteObject(ctx, tmpKey); err != nil {
+			// it's not a fatal error, so we can continue
+			fmt.Printf("failed to delete duplicate upload %s: %v\n", tmpKey, err)
+		}
+		fmt.Printf("Upload already exists, using duplicate: %s\n", upload.StorageKey)
+	} else {
+		// TODO: Retry worker
+		err = s.uploadProvider.MoveObject(ctx, newKey, tmpKey)
 		if err != nil {
-			// TODO: Handle error properly
-			return nil, NewSrvError(err, SrvErrInternal, fmt.Sprintf("failed to presign upload for file %s", file.Name))
-		}
-
-		results[i] = PresignUploadResult{
-			Url:    url,
-			Fields: fields,
+			fmt.Printf("FATAL: failed to move upload from %s to %s: %v\n", tmpKey, newKey, err)
 		}
 	}
 
-	return results, nil
-}
-
-type CompleteUploadItem struct {
-	Key  string
-	Name string
-	Mime string
-	Size int64
-}
-
-func (s *UploadService) CompleteUploads(ctx context.Context, files []*CompleteUploadItem) error {
-	for _, file := range files {
-		src := file.Key
-		// TODO: Validate file properly, for now just skip
-		dst := convertTmpKey(src)
-		if dst == "" {
-			return NewSrvError(nil, SrvErrInvalidInput, "Upload completion failed: invalid key")
-		}
-
-		err := s.uploadProvider.MoveObject(ctx, dst, src)
-		if err != nil {
-			return NewSrvError(err, SrvErrInternal, fmt.Sprintf("failed to move object %s to %s", src, dst))
-		}
-
-		// Add to upload repo
-		fmt.Printf("Adding file %s to upload repository\n%v\n", dst, file)
-		// Push to queue
-	}
+	// TODO: push to queue
 
 	return nil
 }
