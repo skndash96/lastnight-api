@@ -91,11 +91,11 @@ func (s *UploadService) CompleteUpload(ctx context.Context, teamID, userID int32
 	}
 
 	if upload.Created == false {
+		fmt.Printf("Upload already exists, using duplicate: %s\n", upload.StorageKey)
 		if err := s.uploadProvider.DeleteObject(ctx, tmpKey); err != nil {
 			// it's not a fatal error, so we can continue
 			fmt.Printf("failed to delete duplicate upload %s: %v\n", tmpKey, err)
 		}
-		fmt.Printf("Upload already exists, using duplicate: %s\n", upload.StorageKey)
 	} else {
 		// TODO: Retry worker
 		err = s.uploadProvider.MoveObject(ctx, newKey, tmpKey)
